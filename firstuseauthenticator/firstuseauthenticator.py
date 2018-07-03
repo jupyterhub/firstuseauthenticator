@@ -7,9 +7,10 @@ locally in a dbm file, and checked next time they log in.
 """
 import dbm
 from jupyterhub.auth import Authenticator
+from jupyterhub.orm import User
 
 from tornado import gen
-from traitlets.traitlets import Unicode
+from traitlets.traitlets import Unicode, Bool
 
 import bcrypt
 
@@ -26,16 +27,41 @@ class FirstUseAuthenticator(Authenticator):
         """
     )
 
+    create_users = Bool(
+        True,
+        config=True,
+        help="""
+        Create users if they do not exist already.
+
+        When set to false, users would have to be explicitly created before
+        they can log in. Users can be created via the admin panel or by setting
+        whitelist / admin list.
+        """
+    )
+
+    def _user_exists(self, username):
+        """
+        Return true if given user already exists.
+
+        Note: Depends on internal details of JupyterHub that might change
+        across versions. Tested with v0.9
+        """
+        return self.db.query(User).filter_by(name=username).first() is not None
+
     @gen.coroutine
     def authenticate(self, handler, data):
-        # Move everything to bytes
-        username = data['username'].encode('utf-8')
-        password = data['password'].encode('utf-8')
+        username = data['username']
+
+        if not self.create_users:
+            if not self._user_exists(username):
+                return None
+
+        password = data['password']
         with dbm.open(self.dbm_path, 'c', 0o600) as db:
-            stored_pw = db.get(username, None)
+            stored_pw = db.get(username.encode(), None)
             if stored_pw is not None:
-                if bcrypt.hashpw(password, stored_pw) != stored_pw:
+                if bcrypt.hashpw(password.encode(), stored_pw) != stored_pw:
                     return None
             else:
-                db[username] = bcrypt.hashpw(password, bcrypt.gensalt())
-        return data['username']
+                db[username] = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+        return username

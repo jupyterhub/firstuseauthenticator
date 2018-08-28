@@ -38,3 +38,18 @@ they can log in. Users can be created via the admin panel or by setting
 whitelist / admin list.
 
 Defaults to True.
+
+## FAQ ##
+
+#### Why have a password DB and not use PAM ?
+
+For security Reasons. Users are likely to set an, insecure password at
+login time, and you do not want a brute-force/dictionary attack to manage to
+login by attacking via ssh or another mean.
+
+## Security
+
+When using `FirstUseAuthenticator` it is advised to automatically prepend the
+name of the user with a known-prefix (for example `jupyter`). This would prevent
+for example, someone to log-in as `root`, as the created user would be
+`jupyter-root`.

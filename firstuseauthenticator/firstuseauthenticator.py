@@ -65,3 +65,12 @@ class FirstUseAuthenticator(Authenticator):
             else:
                 db[username] = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
         return username
+
+    def delete_user(self, user):
+        """
+        When user is deleted, remove their entry from password db.
+
+        This lets passwords be reset by deleting users.
+        """
+        with dbm.open(self.dbm_path, 'c', 0o600) as db:
+            del db[user.name]

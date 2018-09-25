@@ -46,6 +46,21 @@ class ResetPasswordHandler(BaseHandler):
         html = self.render_template('reset.html')
         self.finish(html)
 
+    async def post(self):
+        data = {}
+        for arg in self.request.arguments:
+            data[arg] = self.get_argument(arg, strip=False)
+        user = self.get_current_user()
+        data['username'] = user.name
+        self.authenticator.reset_password(data)
+
+        html = self.render_template(
+            'reset.html',
+            result=True,
+            result_message='password changed successfully',
+        )
+        self.finish(html)
+
 
 class FirstUseAuthenticator(Authenticator):
     """
@@ -95,7 +110,8 @@ class FirstUseAuthenticator(Authenticator):
                 if bcrypt.hashpw(password.encode(), stored_pw) != stored_pw:
                     return None
             else:
-                db[username] = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+                db[username] = bcrypt.hashpw(password.encode(),
+                                             bcrypt.gensalt())
         return username
 
     def delete_user(self, user):
@@ -108,10 +124,17 @@ class FirstUseAuthenticator(Authenticator):
             del db[user.name]
 
     def reset_password(self, data):
+        """
+        This allow to change password of a logged user.
+        """
         username = data['username']
         new_password = data['password']
-        db[username] = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt())
+
+        with dbm.open(self.dbm_path, 'c', 0o600) as db:
+            db[username] = bcrypt.hashpw(new_password.encode(),
+                                         bcrypt.gensalt())
         return username
 
     def get_handlers(self, app):
-        return super().get_handlers(app) + [(r'/auth/change-password', ResetPasswordHandler)]
+        return super().get_handlers(app) + [(r'/auth/change-password',
+                                            ResetPasswordHandler)]

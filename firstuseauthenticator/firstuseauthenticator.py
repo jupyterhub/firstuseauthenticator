@@ -6,6 +6,8 @@ password for that account. It is hashed with bcrypt & stored
 locally in a dbm file, and checked next time they log in.
 """
 import dbm
+import os
+from jinja2 import ChoiceLoader, FileSystemLoader
 from jupyterhub.auth import Authenticator
 from jupyterhub.handlers import BaseHandler
 from jupyterhub.orm import User
@@ -16,12 +18,31 @@ from traitlets.traitlets import Unicode, Bool
 import bcrypt
 
 
+TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), 'templates')
+
+
 class ResetPasswordHandler(BaseHandler):
     """Render the reset password page."""
+    def __init__(self, *args, **kwargs):
+        self._loaded = False
+        super().__init__(*args, **kwargs)
+
+    def _register_template_path(self):
+        if self._loaded:
+            return
+
+        self.log.debug('Adding %s to template path', TEMPLATE_DIR)
+        loader = FileSystemLoader([TEMPLATE_DIR])
+
+        env = self.settings['jinja2_env']
+        previous_loader = env.loader
+        env.loader = ChoiceLoader([previous_loader, loader])
+
+        self._loaded = True
 
     @web.authenticated
     async def get(self):
-
+        self._register_template_path()
         html = self.render_template('reset.html')
         self.finish(html)
 

@@ -7,12 +7,23 @@ locally in a dbm file, and checked next time they log in.
 """
 import dbm
 from jupyterhub.auth import Authenticator
+from jupyterhub.handlers import BaseHandler
 from jupyterhub.orm import User
 
-from tornado import gen
+from tornado import gen, web
 from traitlets.traitlets import Unicode, Bool
 
 import bcrypt
+
+
+class ResetPasswordHandler(BaseHandler):
+    """Render the reset password page."""
+
+    @web.authenticated
+    async def get(self):
+
+        html = self.render_template('reset.html')
+        self.finish(html)
 
 
 class FirstUseAuthenticator(Authenticator):
@@ -74,3 +85,12 @@ class FirstUseAuthenticator(Authenticator):
         """
         with dbm.open(self.dbm_path, 'c', 0o600) as db:
             del db[user.name]
+
+    def reset_password(self, data):
+        username = data['username']
+        new_password = data['password']
+        db[username] = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt())
+        return username
+
+    def get_handlers(self, app):
+        return super().get_handlers(app) + [(r'/auth/change-password', ResetPasswordHandler)]

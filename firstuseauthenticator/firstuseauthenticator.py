@@ -58,7 +58,7 @@ class ResetPasswordHandler(BaseHandler):
         html = self.render_template(
             'reset.html',
             result=True,
-            result_message='password changed successfully',
+            result_message='your password has been changed successfully',
         )
         self.finish(html)
 

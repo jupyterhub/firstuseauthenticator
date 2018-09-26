@@ -46,6 +46,7 @@ class ResetPasswordHandler(BaseHandler):
         html = self.render_template('reset.html')
         self.finish(html)
 
+    @web.authenticated
     async def post(self):
         data = {}
         for arg in self.request.arguments:

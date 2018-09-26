@@ -1,38 +1,34 @@
 {% extends "page.html" %}
-
 {% block main %}
-
-<div class="container">
-<form action="{{post_url}}" method="post" role="form">
-  <h2 class="auth-form-header">
-    Change Password
-  </h2>
-  <div class='auth-form-body'>
-
-
-    <label for='password_input'>New Password:</label>
-    <input
-      type="password"
-      class="form-control"
-      name="password"
-      id="password_input"
-      tabindex="2"
-    />
-
-    <input
-      type="submit"
-      id="login_submit"
-      class='btn btn-jupyter'
-      value='Sign In'
-      tabindex="3"
-    />
+  <div class="container">
+    <form action="{{post_url}}" method="post" role="form">
+      <h2>
+      Change Password
+      </h2>
+      <div>
+        <div class="form-group">
+          <label for='password_input'>New Password:</label>
+          <input
+          type="password"
+          class="form-control"
+          name="password"
+          id="password_input"
+          tabindex="2"
+          />
+        </div>
+        <div class="form-group">
+          <input
+          type="submit"
+          id="login_submit"
+          class='btn btn-jupyter'
+          value='Change Password'
+          tabindex="3"
+          />
+        </div>
+      </div>
+    </form>
+    {% if result %}
+      <div class="alert alert-success" role="alert">{{result_message}}</div>
+    {% endif %}
   </div>
-</form>
-{% if result %}
-  <p>
-    {{result_message}}
-  </p>
-{% endif %}
-</div>
-
 {% endblock %}

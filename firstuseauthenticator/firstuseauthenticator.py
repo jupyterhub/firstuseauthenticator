@@ -48,12 +48,9 @@ class ResetPasswordHandler(BaseHandler):
 
     @web.authenticated
     async def post(self):
-        data = {}
-        for arg in self.request.arguments:
-            data[arg] = self.get_argument(arg, strip=False)
         user = self.get_current_user()
-        data['username'] = user.name
-        self.authenticator.reset_password(data)
+        new_password = self.get_body_argument('password', strip=False)
+        self.authenticator.reset_password(user.name, new_password)
 
         html = self.render_template(
             'reset.html',
@@ -124,13 +121,10 @@ class FirstUseAuthenticator(Authenticator):
         with dbm.open(self.dbm_path, 'c', 0o600) as db:
             del db[user.name]
 
-    def reset_password(self, data):
+    def reset_password(self, username, new_password):
         """
         This allow to change password of a logged user.
         """
-        username = data['username']
-        new_password = data['password']
-
         with dbm.open(self.dbm_path, 'c', 0o600) as db:
             db[username] = bcrypt.hashpw(new_password.encode(),
                                          bcrypt.gensalt())

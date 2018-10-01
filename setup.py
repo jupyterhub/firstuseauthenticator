@@ -9,5 +9,8 @@ setup(
     author_email='yuvipanda@gmail.com',
     license='3 Clause BSD',
     packages=find_packages(),
-    install_requires=['bcrypt']
+    install_requires=['bcrypt'],
+    package_data={
+        '': ['*.html'],
+    }
 )

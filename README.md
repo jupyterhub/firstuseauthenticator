@@ -47,9 +47,15 @@ For security Reasons. Users are likely to set an, insecure password at
 login time, and you do not want a brute-force/dictionary attack to manage to
 login by attacking via ssh or another mean.
 
+#### How can I change my password?
+
+To change your password, you should login in your jupyterhub account, 
+go to `<your_server_ip>/hub/auth/change-password` and change the password. 
+
 ## Security
 
 When using `FirstUseAuthenticator` it is advised to automatically prepend the
 name of the user with a known-prefix (for example `jupyter`). This would prevent
 for example, someone to log-in as `root`, as the created user would be
 `jupyter-root`.
+

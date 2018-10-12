@@ -93,6 +93,12 @@ class FirstUseAuthenticator(Authenticator):
         """
         return self.db.query(User).filter_by(name=username).first() is not None
 
+    def validate_username(self, name):
+        invalid_chars = [',', ' ']
+        if any((char in name) for char in invalid_chars):
+            return False
+        return super().validate_username()
+
     @gen.coroutine
     def authenticate(self, handler, data):
         username = data['username']

@@ -52,6 +52,11 @@ login by attacking via ssh or another mean.
 To change your password, you should login in your jupyterhub account, 
 go to `<your_server_ip>/hub/auth/change-password` and change the password. 
 
+#### I'm getting an error when creating my username
+
+Usernames cannot contain spaces or commas. Please check if your username is free 
+of these characters. 
+
 ## Security
 
 When using `FirstUseAuthenticator` it is advised to automatically prepend the

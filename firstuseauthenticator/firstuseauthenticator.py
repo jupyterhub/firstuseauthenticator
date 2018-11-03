@@ -97,7 +97,7 @@ class FirstUseAuthenticator(Authenticator):
         invalid_chars = [',', ' ']
         if any((char in name) for char in invalid_chars):
             return False
-        return super().validate_username()
+        return super().validate_username(name)
 
     @gen.coroutine
     def authenticate(self, handler, data):

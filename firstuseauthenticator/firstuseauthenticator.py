@@ -125,7 +125,7 @@ class FirstUseAuthenticator(Authenticator):
         This lets passwords be reset by deleting users.
         """
         with dbm.open(self.dbm_path, 'c', 0o600) as db:
-            del db[user.name]
+            db.pop(user.name, None)
 
     def reset_password(self, username, new_password):
         """

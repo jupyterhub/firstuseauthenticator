@@ -8,7 +8,7 @@ locally in a dbm file, and checked next time they log in.
 import dbm
 import os
 from jinja2 import ChoiceLoader, FileSystemLoader
-from jupyterhub.auth import Authenticator
+from jupyterhub.auth import LocalAuthenticator
 from jupyterhub.handlers import BaseHandler
 from jupyterhub.orm import User
 
@@ -60,7 +60,7 @@ class ResetPasswordHandler(BaseHandler):
         self.finish(html)
 
 
-class FirstUseAuthenticator(Authenticator):
+class FirstUseAuthenticator(LocalAuthenticator):
     """
     JupyterHub authenticator that lets users set password on first use.
     """

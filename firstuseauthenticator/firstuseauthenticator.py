@@ -13,7 +13,7 @@ from jupyterhub.handlers import BaseHandler
 from jupyterhub.orm import User
 
 from tornado import gen, web
-from traitlets.traitlets import Unicode, Bool
+from traitlets.traitlets import Unicode, Bool, Integer
 
 import bcrypt
 
@@ -84,6 +84,15 @@ class FirstUseAuthenticator(Authenticator):
         """
     )
 
+    min_password_lenght = Integer(
+        7,
+        config=True,
+        help="""
+        The minimum lenght of the password when user is created.
+        When set to 0, users will be allowed to set 0 length passwords.
+        """
+    )
+
     def _user_exists(self, username):
         """
         Return true if given user already exists.
@@ -92,6 +101,11 @@ class FirstUseAuthenticator(Authenticator):
         across versions. Tested with v0.9
         """
         return self.db.query(User).filter_by(name=username).first() is not None
+
+
+    def _validate_password(self, password):
+        return len(password) >= self.min_password_lenght
+
 
     def validate_username(self, name):
         invalid_chars = [',', ' ']
@@ -108,6 +122,13 @@ class FirstUseAuthenticator(Authenticator):
                 return None
 
         password = data['password']
+        # Don't enforce password lenght requirement on existing users, since that can
+        # lock users out of their hubs.
+        if not self._validate_password(password) and not self._user_exists(username):
+            self.log.error('Password too short! \
+                Please choose a password at least %d characters long.'
+                % self.min_password_lenght)
+            return None
         with dbm.open(self.dbm_path, 'c', 0o600) as db:
             stored_pw = db.get(username.encode(), None)
             if stored_pw is not None:
@@ -134,6 +155,11 @@ class FirstUseAuthenticator(Authenticator):
         """
         This allow to change password of a logged user.
         """
+        if not self._validate_password(password):
+            self.log.error('Password too short! \
+                Please choose a password at least %d characters long.'
+                % self.min_password_lenght)
+            return None
         with dbm.open(self.dbm_path, 'c', 0o600) as db:
             db[username] = bcrypt.hashpw(new_password.encode(),
                                          bcrypt.gensalt())

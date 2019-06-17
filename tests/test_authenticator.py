@@ -33,15 +33,15 @@ async def test_basic(tmpcwd):
     )
     assert username is None
 
-async def test_min_pass_lenght(caplog, tmpcwd):
+async def test_min_pass_length(caplog, tmpcwd):
     users = []
     def user_exists(username):
         return username in users
 
     auth = FirstUseAuthenticator()
 
-    # allow passwords with any lenght
-    auth.min_password_lenght = 0
+    # allow passwords with any length
+    auth.min_password_length = 0
 
     # new user, first login, any password allowed
     name = "name"
@@ -51,13 +51,13 @@ async def test_min_pass_lenght(caplog, tmpcwd):
         assert username == "name"
         users.append(name)
 
-    # reject passwords that are less than 10 characters in lenght
-    auth.min_password_lenght = 10
+    # reject passwords that are less than 10 characters in length
+    auth.min_password_length = 10
 
     # existing user, second login, only passwords longer than 10 chars allowed
     with mock.patch.object(auth, '_user_exists', user_exists):
         username = await auth.authenticate(mock.Mock(), {"username": name, "password": password})
-        # assert existing users are not impacted by the new lenght rule
+        # assert existing users are not impacted by the new length rule
         for record in caplog.records:
             assert record.levelname != 'ERROR'
 
@@ -67,8 +67,8 @@ async def test_min_pass_lenght(caplog, tmpcwd):
     with mock.patch.object(auth, '_user_exists', user_exists):
         username = await auth.authenticate(mock.Mock(), {"username": name, "password": password})
         assert username is None
-        # assert that new users' passwords must have the specified lenght
+        # assert that new users' passwords must have the specified length
         for record in caplog.records:
             if record.levelname == 'ERROR':
                 assert record.msg == f'Password too short! \
-                Please choose a password at least {auth.min_password_lenght} characters long.'
+                Please choose a password at least {auth.min_password_length} characters long.'

@@ -48,7 +48,7 @@ class ResetPasswordHandler(BaseHandler):
 
     @web.authenticated
     async def post(self):
-        user = self.get_current_user()
+        user = self.current_user
         new_password = self.get_body_argument('password', strip=False)
         self.authenticator.reset_password(user.name, new_password)
 

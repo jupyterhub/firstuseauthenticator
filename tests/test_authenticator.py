@@ -70,5 +70,7 @@ async def test_min_pass_length(caplog, tmpcwd):
         # assert that new users' passwords must have the specified length
         for record in caplog.records:
             if record.levelname == 'ERROR':
-                assert record.msg == 'Password too short! \
-                Please choose a password at least %d characters long.' % auth.min_password_length
+                assert record.msg == (
+                    'Password too short! Please choose a password at least %d characters long.'
+                    % auth.min_password_length
+                )

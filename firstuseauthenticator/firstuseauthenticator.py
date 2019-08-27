@@ -10,6 +10,7 @@ import os
 from jinja2 import ChoiceLoader, FileSystemLoader
 from jupyterhub.auth import Authenticator
 from jupyterhub.handlers import BaseHandler
+from jupyterhub.handlers import LoginHandler
 from jupyterhub.orm import User
 
 from tornado import gen, web
@@ -19,6 +20,12 @@ import bcrypt
 
 
 TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), 'templates')
+
+
+class CustomLoginHandler(LoginHandler):
+    custom_login_error = 'Invalid username or password'
+    def _render(self, login_error=None, username=None):
+        return super()._render(self.custom_login_error, username)
 
 
 class ResetPasswordHandler(BaseHandler):
@@ -50,12 +57,18 @@ class ResetPasswordHandler(BaseHandler):
     async def post(self):
         user = self.current_user
         new_password = self.get_body_argument('password', strip=False)
-        self.authenticator.reset_password(user.name, new_password)
+        msg = self.authenticator.reset_password(user.name, new_password)
+
+        if "success" in msg:
+            alert = "success"
+        else:
+            alert = "danger"
 
         html = self.render_template(
             'reset.html',
             result=True,
-            result_message='your password has been changed successfully',
+            alert=alert,
+            result_message=msg,
         )
         self.finish(html)
 
@@ -125,9 +138,12 @@ class FirstUseAuthenticator(Authenticator):
         # Don't enforce password length requirement on existing users, since that can
         # lock users out of their hubs.
         if not self._validate_password(password) and not self._user_exists(username):
-            self.log.error('Password too short! \
-                Please choose a password at least %d characters long.'
-                % self.min_password_length)
+            handler.custom_login_error = (
+                'Password too short! Please choose a password at least %d characters long.'
+                % self.min_password_length
+            )
+
+            self.log.error(handler.custom_login_error)
             return None
         with dbm.open(self.dbm_path, 'c', 0o600) as db:
             stored_pw = db.get(username.encode(), None)
@@ -155,16 +171,19 @@ class FirstUseAuthenticator(Authenticator):
         """
         This allow to change password of a logged user.
         """
-        if not self._validate_password(password):
-            self.log.error('Password too short! \
-                Please choose a password at least %d characters long.'
-                % self.min_password_length)
-            return None
+        if not self._validate_password(new_password):
+            login_err = (
+                'Password too short! Please choose a password at least %d characters long.'
+                % self.min_password_length
+            )
+            self.log.error(login_err)
+            return login_err
         with dbm.open(self.dbm_path, 'c', 0o600) as db:
             db[username] = bcrypt.hashpw(new_password.encode(),
                                          bcrypt.gensalt())
-        return username
+        login_msg = "Your password has been changed successfully!"
+        self.log.info(login_msg)
+        return login_msg
 
     def get_handlers(self, app):
-        return super().get_handlers(app) + [(r'/auth/change-password',
-                                            ResetPasswordHandler)]
+        return [(r'/login', CustomLoginHandler), (r'/auth/change-password',ResetPasswordHandler)]

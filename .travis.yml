@@ -1,23 +1,31 @@
 language: python
 dist: xenial
-python:
-  - 3.5
-  - 3.6
-  - 3.7
-  - 3.8
+
 install:
   - pip install --upgrade setuptools pip
   - pip install --upgrade . -r dev-requirements.txt
   - pip freeze
+
 script:
   - pytest
-deploy:
-  provider: pypi
-  user: "__token__"
-  # password: set by TravisCI's environment variable PYPI_PASSWORD
-  distributions: sdist bdist_wheel
-  on:
-    # Only deploy on tagged commits instead of the default of only doing it to
-    # the master branch. A tag does not belong specifically to a branch, so
-    # without this it would fail to deploy for tags.
-    tags: true
+
+jobs:
+  fast_finish: true
+  include:
+    - python: 3.5
+    - python: 3.6
+    - python: 3.7
+    - python: 3.8
+    # Only deploy if all test jobs passed
+    - stage: deploy
+      python: 3.7
+      if: tag IS present
+      deploy:
+        provider: pypi
+        user: __token__
+        # password: set by TravisCI's environment variable PYPI_PASSWORD
+        distributions: sdist bdist_wheel
+        on:
+          # Without this we get the note about:
+          # Skipping a deployment with the pypi provider because this branch is not permitted: <tag>
+          tags: true

@@ -27,9 +27,9 @@ repository](https://github.com/jupyterhub/firstuseauthenticator).
    [choldgraf/github-activity](https://github.com/choldgraf/github-activity)
    utility.
 
-1. Set the `version_info` variable in [_version.py](firstuseauthenticator/_version.py)
+1. Set the `version_info` variable in [\_version.py](firstuseauthenticator/_version.py)
    appropriately and make a commit.
-   
+
    ```shell
    git add firstuseauthenticator/_version.py
    VERSION=...  # e.g. 1.2.3
@@ -37,9 +37,9 @@ repository](https://github.com/jupyterhub/firstuseauthenticator).
    ```
 
 1. Reset the `version_info` variable in
-   [_version.py](firstuseauthenticator/_version.py) appropriately with an incremented
+   [\_version.py](firstuseauthenticator/_version.py) appropriately with an incremented
    patch version and a `dev` element, then make a commit.
-   
+
    ```shell
    git add firstuseauthenticator/_version.py
    git commit -m "back to dev"
@@ -67,3 +67,4 @@ repository](https://github.com/jupyterhub/firstuseauthenticator).
    # then push it
    git push $ORIGIN refs/tags/$VERSION
    ```
+

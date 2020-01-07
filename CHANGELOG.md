@@ -1,11 +1,10 @@
 # Changes in firstuseauthenticator
 
-
 For detailed changes from the prior release, click on the version number, and
 its link will bring up a GitHub listing of changes. Use `git log` on the
 command line for details.
 
-## [Unreleased]
+## [0.13] - 2020-01-07
 
 * fixed 'change password' feature for Jupyterhub version 1.0.0 [#23](https://github.com/jupyterhub/firstuseauthenticator/pull/23) ([@ABVitali](https://github.com/ABVitali))
 * Update packages in tests [#22](https://github.com/jupyterhub/firstuseauthenticator/pull/22) ([@minrk](https://github.com/minrk))
@@ -26,6 +25,7 @@ command line for details.
 ## 0.11 - 2018-09-04
 * First release
 
-[Unreleased]: https://github.com/jupyterhub/firstuseauthenticator/compare/v0.12...d032b7f4bd22ee7e3a63d3ad41c0fea8c1fd7e37
-[0.11.1]: https://github.com/jupyterhub/firstuseauthenticator/compare/v0.11...v0.11.1
+[0.13]: https://github.com/jupyterhub/firstuseauthenticator/compare/v0.12...v0.13
 [0.12]: https://github.com/jupyterhub/firstuseauthenticator/compare/v0.11...v0.12
+[0.11.1]: https://github.com/jupyterhub/firstuseauthenticator/compare/v0.11...v0.11.1
+

@@ -23,6 +23,14 @@ TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), 'templates')
 
 
 class CustomLoginHandler(LoginHandler):
+    """
+    Render the login page.
+
+    Allows customising the login error when more specific
+    feedback is needed. Checkout
+    https://github.com/jupyterhub/firstuseauthenticator/pull/21#discussion_r364252009
+    for more details
+    """
     custom_login_error = 'Invalid username or password'
     def _render(self, login_error=None, username=None):
         return super()._render(self.custom_login_error, username)
@@ -169,7 +177,7 @@ class FirstUseAuthenticator(Authenticator):
 
     def reset_password(self, username, new_password):
         """
-        This allow to change password of a logged user.
+        This allows changing the password of a logged user.
         """
         if not self._validate_password(new_password):
             login_err = (
@@ -177,6 +185,7 @@ class FirstUseAuthenticator(Authenticator):
                 % self.min_password_length
             )
             self.log.error(login_err)
+            # Resetting the password will fail if the new password is too short.
             return login_err
         with dbm.open(self.dbm_path, 'c', 0o600) as db:
             db[username] = bcrypt.hashpw(new_password.encode(),

@@ -1,4 +1,4 @@
-[![TravisCI (.org) build status](https://img.shields.io/travis/org/jupyterhub/firstuseauthenticator/master?logo=travis)](https://travis-ci.org/jupyterhub/firstuseauthenticator)
+[![TravisCI (.org) build status](https://img.shields.io/travis/jupyterhub/firstuseauthenticator/master?logo=travis)](https://travis-ci.org/jupyterhub/firstuseauthenticator)
 [![Latest PyPI version](https://img.shields.io/pypi/v/jupyterhub-firstuseauthenticator?logo=pypi)](https://pypi.python.org/pypi/jupyterhub-firstuseauthenticator)
 [![GitHub](https://img.shields.io/badge/issue_tracking-github-blue?logo=github)](https://github.com/jupyterhub/jupyterhub-firstuseauthenticator/issues)
 [![Discourse](https://img.shields.io/badge/help_forum-discourse-blue?logo=discourse)](https://discourse.jupyter.org/c/jupyterhub)
@@ -69,4 +69,3 @@ When using `FirstUseAuthenticator` it is advised to automatically prepend the
 name of the user with a known-prefix (for example `jupyter`). This would prevent
 for example, someone to log-in as `root`, as the created user would be
 `jupyter-root`.
-

@@ -12,6 +12,8 @@ setup(
     name='jupyterhub-firstuseauthenticator',
     version=version_ns['__version__'],
     description='JupyterHub Authenticator that lets users set passwords on first use',
+    long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
     url='https://github.com/yuvipanda/jupyterhub-firstuseauthenticator',
     author='Yuvi Panda',
     author_email='yuvipanda@gmail.com',

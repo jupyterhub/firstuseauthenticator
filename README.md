@@ -1,4 +1,4 @@
-[![TravisCI (.com) build status](https://img.shields.io/travis/com/jupyterhub/firstuseauthenticator/master?logo=travis)](https://travis-ci.com/jupyterhub/firstuseauthenticator)
+[![TravisCI (.org) build status](https://img.shields.io/travis/org/jupyterhub/firstuseauthenticator/master?logo=travis)](https://travis-ci.org/jupyterhub/firstuseauthenticator)
 [![Latest PyPI version](https://img.shields.io/pypi/v/jupyterhub-firstuseauthenticator?logo=pypi)](https://pypi.python.org/pypi/jupyterhub-firstuseauthenticator)
 [![GitHub](https://img.shields.io/badge/issue_tracking-github-blue?logo=github)](https://github.com/jupyterhub/jupyterhub-firstuseauthenticator/issues)
 [![Discourse](https://img.shields.io/badge/help_forum-discourse-blue?logo=discourse)](https://discourse.jupyter.org/c/jupyterhub)

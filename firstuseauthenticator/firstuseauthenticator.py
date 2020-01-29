@@ -10,15 +10,30 @@ import os
 from jinja2 import ChoiceLoader, FileSystemLoader
 from jupyterhub.auth import Authenticator
 from jupyterhub.handlers import BaseHandler
+from jupyterhub.handlers import LoginHandler
 from jupyterhub.orm import User
 
 from tornado import gen, web
-from traitlets.traitlets import Unicode, Bool
+from traitlets.traitlets import Unicode, Bool, Integer
 
 import bcrypt
 
 
 TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), 'templates')
+
+
+class CustomLoginHandler(LoginHandler):
+    """
+    Render the login page.
+
+    Allows customising the login error when more specific
+    feedback is needed. Checkout
+    https://github.com/jupyterhub/firstuseauthenticator/pull/21#discussion_r364252009
+    for more details
+    """
+    custom_login_error = 'Invalid username or password'
+    def _render(self, login_error=None, username=None):
+        return super()._render(self.custom_login_error, username)
 
 
 class ResetPasswordHandler(BaseHandler):
@@ -50,12 +65,18 @@ class ResetPasswordHandler(BaseHandler):
     async def post(self):
         user = self.current_user
         new_password = self.get_body_argument('password', strip=False)
-        self.authenticator.reset_password(user.name, new_password)
+        msg = self.authenticator.reset_password(user.name, new_password)
+
+        if "success" in msg:
+            alert = "success"
+        else:
+            alert = "danger"
 
         html = self.render_template(
             'reset.html',
             result=True,
-            result_message='your password has been changed successfully',
+            alert=alert,
+            result_message=msg,
         )
         self.finish(html)
 
@@ -84,6 +105,15 @@ class FirstUseAuthenticator(Authenticator):
         """
     )
 
+    min_password_length = Integer(
+        7,
+        config=True,
+        help="""
+        The minimum length of the password when user is created.
+        When set to 0, users will be allowed to set 0 length passwords.
+        """
+    )
+
     def _user_exists(self, username):
         """
         Return true if given user already exists.
@@ -92,6 +122,11 @@ class FirstUseAuthenticator(Authenticator):
         across versions. Tested with v0.9
         """
         return self.db.query(User).filter_by(name=username).first() is not None
+
+
+    def _validate_password(self, password):
+        return len(password) >= self.min_password_length
+
 
     def validate_username(self, name):
         invalid_chars = [',', ' ']
@@ -108,6 +143,16 @@ class FirstUseAuthenticator(Authenticator):
                 return None
 
         password = data['password']
+        # Don't enforce password length requirement on existing users, since that can
+        # lock users out of their hubs.
+        if not self._validate_password(password) and not self._user_exists(username):
+            handler.custom_login_error = (
+                'Password too short! Please choose a password at least %d characters long.'
+                % self.min_password_length
+            )
+
+            self.log.error(handler.custom_login_error)
+            return None
         with dbm.open(self.dbm_path, 'c', 0o600) as db:
             stored_pw = db.get(username.encode(), None)
             if stored_pw is not None:
@@ -132,13 +177,22 @@ class FirstUseAuthenticator(Authenticator):
 
     def reset_password(self, username, new_password):
         """
-        This allow to change password of a logged user.
+        This allows changing the password of a logged user.
         """
+        if not self._validate_password(new_password):
+            login_err = (
+                'Password too short! Please choose a password at least %d characters long.'
+                % self.min_password_length
+            )
+            self.log.error(login_err)
+            # Resetting the password will fail if the new password is too short.
+            return login_err
         with dbm.open(self.dbm_path, 'c', 0o600) as db:
             db[username] = bcrypt.hashpw(new_password.encode(),
                                          bcrypt.gensalt())
-        return username
+        login_msg = "Your password has been changed successfully!"
+        self.log.info(login_msg)
+        return login_msg
 
     def get_handlers(self, app):
-        return super().get_handlers(app) + [(r'/auth/change-password',
-                                            ResetPasswordHandler)]
+        return [(r'/login', CustomLoginHandler), (r'/auth/change-password',ResetPasswordHandler)]

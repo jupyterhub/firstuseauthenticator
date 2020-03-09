@@ -31,9 +31,11 @@ class CustomLoginHandler(LoginHandler):
     https://github.com/jupyterhub/firstuseauthenticator/pull/21#discussion_r364252009
     for more details
     """
-    custom_login_error = 'Invalid username or password'
+    custom_login_error = ''
     def _render(self, login_error=None, username=None):
-        return super()._render(self.custom_login_error, username)
+        if self.custom_login_error:
+            login_error = self.custom_login_error
+        return super()._render(login_error, username)
 
 
 class ResetPasswordHandler(BaseHandler):

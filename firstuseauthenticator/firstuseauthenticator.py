@@ -150,17 +150,17 @@ class FirstUseAuthenticator(Authenticator):
         
         with dbm.open(self.dbm_path, 'c', 0o600) as db:
             stored_pw = db.get(username.encode(), None)
-            if stored_pw is None and not self._validate_password(password):
-                handler.custom_login_error = (
-                    'Password too short! Please choose a password at least %d characters long.'
-                    % self.min_password_length
-                )
-                self.log.error(handler.custom_login_error)
-                return None
-            elif stored_pw is not None:
+            if stored_pw is not None:
                 if bcrypt.hashpw(password.encode(), stored_pw) != stored_pw:
                     return None
             else:
+                if not self._validate_password(password):
+                    handler.custom_login_error = (
+                        'Password too short! Please choose a password at least %d characters long.'
+                        % self.min_password_length
+                        )
+                    self.log.error(handler.custom_login_error)
+                    return None                
                 db[username] = bcrypt.hashpw(password.encode(),
                                              bcrypt.gensalt())
         return username

@@ -147,20 +147,20 @@ class FirstUseAuthenticator(Authenticator):
         password = data['password']
         # Don't enforce password length requirement on existing users, since that can
         # lock users out of their hubs.
-        if not self._validate_password(password) and not self._user_exists(username):
-            handler.custom_login_error = (
-                'Password too short! Please choose a password at least %d characters long.'
-                % self.min_password_length
-            )
-
-            self.log.error(handler.custom_login_error)
-            return None
+        
         with dbm.open(self.dbm_path, 'c', 0o600) as db:
             stored_pw = db.get(username.encode(), None)
             if stored_pw is not None:
                 if bcrypt.hashpw(password.encode(), stored_pw) != stored_pw:
                     return None
             else:
+                if not self._validate_password(password):
+                    handler.custom_login_error = (
+                        'Password too short! Please choose a password at least %d characters long.'
+                        % self.min_password_length
+                        )
+                    self.log.error(handler.custom_login_error)
+                    return None                
                 db[username] = bcrypt.hashpw(password.encode(),
                                              bcrypt.gensalt())
         return username

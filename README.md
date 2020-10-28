@@ -1,5 +1,5 @@
 [![Latest PyPI version](https://img.shields.io/pypi/v/jupyterhub-firstuseauthenticator?logo=pypi)](https://pypi.python.org/pypi/jupyterhub-firstuseauthenticator)
-[![TravisCI (.org) build status](https://img.shields.io/travis/jupyterhub/firstuseauthenticator/master?logo=travis)](https://travis-ci.org/jupyterhub/firstuseauthenticator)
+[![TravisCI build status](https://img.shields.io/travis/com/jupyterhub/firstuseauthenticator?logo=travis)](https://travis-ci.com/jupyterhub/firstuseauthenticator)
 [![GitHub](https://img.shields.io/badge/issue_tracking-github-blue?logo=github)](https://github.com/jupyterhub/jupyterhub-firstuseauthenticator/issues)
 [![Discourse](https://img.shields.io/badge/help_forum-discourse-blue?logo=discourse)](https://discourse.jupyter.org/c/jupyterhub)
 [![Gitter](https://img.shields.io/badge/social_chat-gitter-blue?logo=gitter)](https://gitter.im/jupyterhub/jupyterhub)

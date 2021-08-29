@@ -60,7 +60,7 @@ class ResetPasswordHandler(BaseHandler):
     @web.authenticated
     async def get(self):
         self._register_template_path()
-        html = self.render_template('reset.html')
+        html = await self.render_template('reset.html')
         self.finish(html)
 
     @web.authenticated
@@ -74,7 +74,7 @@ class ResetPasswordHandler(BaseHandler):
         else:
             alert = "danger"
 
-        html = self.render_template(
+        html = await self.render_template(
             'reset.html',
             result=True,
             alert=alert,

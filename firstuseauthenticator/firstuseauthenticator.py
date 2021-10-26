@@ -138,7 +138,7 @@ class FirstUseAuthenticator(Authenticator):
 
     @gen.coroutine
     def authenticate(self, handler, data):
-        username = data['username']
+        username = self.normalize_username(data['username'])
 
         if not self.create_users:
             if not self._user_exists(username):

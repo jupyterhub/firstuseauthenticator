@@ -32,6 +32,7 @@ class CustomLoginHandler(LoginHandler):
     for more details
     """
     custom_login_error = ''
+
     def _render(self, login_error=None, username=None):
         if self.custom_login_error:
             login_error = self.custom_login_error
@@ -43,6 +44,7 @@ class ResetPasswordHandler(BaseHandler):
     def __init__(self, *args, **kwargs):
         self._loaded = False
         super().__init__(*args, **kwargs)
+
 
     def _register_template_path(self):
         if self._loaded:
@@ -57,11 +59,13 @@ class ResetPasswordHandler(BaseHandler):
 
         self._loaded = True
 
+
     @web.authenticated
     async def get(self):
         self._register_template_path()
         html = await self.render_template('reset.html')
         self.finish(html)
+
 
     @web.authenticated
     async def post(self):
@@ -138,31 +142,32 @@ class FirstUseAuthenticator(Authenticator):
 
     async def authenticate(self, handler, data):
         username = self.normalize_username(data['username'])
+        password = data['password']
 
         if not self.create_users:
             if not self._user_exists(username):
                 return None
 
-        password = data['password']
-        # Don't enforce password length requirement on existing users, since that can
-        # lock users out of their hubs.
-        
         with dbm.open(self.dbm_path, 'c', 0o600) as db:
             stored_pw = db.get(username.encode(), None)
+
             if stored_pw is not None:
+                # for existing passwords: ensure password hash match
                 if bcrypt.hashpw(password.encode(), stored_pw) != stored_pw:
                     return None
             else:
+                # for new users: ensure password validity and store password hash
                 if not self._validate_password(password):
                     handler.custom_login_error = (
                         'Password too short! Please choose a password at least %d characters long.'
                         % self.min_password_length
-                        )
+                    )
                     self.log.error(handler.custom_login_error)
-                    return None                
-                db[username] = bcrypt.hashpw(password.encode(),
-                                             bcrypt.gensalt())
+                    return None
+                db[username] = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+
         return username
+
 
     def delete_user(self, user):
         """
@@ -173,8 +178,9 @@ class FirstUseAuthenticator(Authenticator):
         try:
             with dbm.open(self.dbm_path, 'c', 0o600) as db:
                 del db[user.name]
-        except KeyError as k:
+        except KeyError:
             pass
+
 
     def reset_password(self, username, new_password):
         """
@@ -189,11 +195,11 @@ class FirstUseAuthenticator(Authenticator):
             # Resetting the password will fail if the new password is too short.
             return login_err
         with dbm.open(self.dbm_path, 'c', 0o600) as db:
-            db[username] = bcrypt.hashpw(new_password.encode(),
-                                         bcrypt.gensalt())
+            db[username] = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt())
         login_msg = "Your password has been changed successfully!"
         self.log.info(login_msg)
         return login_msg
 
+
     def get_handlers(self, app):
-        return [(r'/login', CustomLoginHandler), (r'/auth/change-password',ResetPasswordHandler)]
+        return [(r'/login', CustomLoginHandler), (r'/auth/change-password', ResetPasswordHandler)]

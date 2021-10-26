@@ -19,7 +19,7 @@ setup(
     author_email='yuvipanda@gmail.com',
     license='3 Clause BSD',
     packages=find_packages(),
-    install_requires=['bcrypt', 'jupyterhub>=0.8'],
+    install_requires=['bcrypt', 'jupyterhub>=1.3'],
     package_data={
         '': ['*.html'],
     },

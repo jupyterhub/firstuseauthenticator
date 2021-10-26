@@ -136,7 +136,7 @@ class FirstUseAuthenticator(Authenticator):
             return False
         return super().validate_username(name)
 
-    def authenticate(self, handler, data):
+    async def authenticate(self, handler, data):
         username = self.normalize_username(data['username'])
 
         if not self.create_users:

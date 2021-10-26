@@ -13,7 +13,7 @@ from jupyterhub.handlers import BaseHandler
 from jupyterhub.handlers import LoginHandler
 from jupyterhub.orm import User
 
-from tornado import gen, web
+from tornado import web
 from traitlets.traitlets import Unicode, Bool, Integer
 
 import bcrypt
@@ -136,7 +136,6 @@ class FirstUseAuthenticator(Authenticator):
             return False
         return super().validate_username(name)
 
-    @gen.coroutine
     def authenticate(self, handler, data):
         username = self.normalize_username(data['username'])
 

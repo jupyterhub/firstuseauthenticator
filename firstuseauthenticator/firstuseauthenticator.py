@@ -120,6 +120,83 @@ class FirstUseAuthenticator(Authenticator):
         """
     )
 
+    check_passwords_on_startup = Bool(
+        True,
+        config=True,
+        help="""
+        Check for non-normalized-username passwords on startup.
+        """,
+    )
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        if self.check_passwords_on_startup:
+            self._check_passwords()
+
+    def _check_passwords(self):
+        """Validation checks on the password database at startup
+
+        Mainly checks for the presence of passwords for non-normalized usernames
+
+        If a username is present only in one non-normalized form,
+        it will be renamed to the normalized form.
+
+        If multiple forms of the same normalized username are present,
+        ensure that at least the normalized form is also present.
+        It will continue to produce warnings until manual intervention removes the non-normalized entries.
+
+        Non-normalized entries will never be used during login.
+        """
+        with dbm.open(self.dbm_path, "c", 0o600) as db:
+            # load the username:hashed_password dict
+            passwords = {}
+            for key in db.keys():
+                passwords[key.decode("utf8")] = db[key]
+
+            # normalization map
+            # compute the full map before checking in case two non-normalized forms are used
+            # keys are normalized usernames,
+            # values are lists of all names present in the db
+            # which normalize to the same user
+            normalized_usernames = {}
+            for username in passwords:
+                normalized_username = self.normalize_username(username)
+                normalized_usernames.setdefault(normalized_username, []).append(
+                    username
+                )
+
+            # check if any non-normalized usernames are in the db
+            for normalized_username, usernames in normalized_usernames.items():
+                # case 1. only one form, make sure it's stored in the normalized username
+                if len(usernames) == 1:
+                    username = usernames[0]
+                    # case 1.a only normalized form, nothing to do
+                    if username == normalized_username:
+                        continue
+                    # 1.b only one form, not normalized. Unambiguous to fix.
+                    # move password from non-normalized to normalized.
+                    self.log.warning(
+                        f"Normalizing username in password db {username}->{normalized_username}"
+                    )
+                    db[normalized_username.encode("utf8")] = passwords[username]
+                    del db[username]
+                else:
+                    # collision! Multiple passwords for the same Hub user with different normalization
+                    # do not clear these automatically because the 'right' answer is ambiguous,
+                    # but make sure the normalized_username is set,
+                    # so that after upgrade, there is always a password set
+                    # the non-normalized username passwords will never be used
+                    # after jupyterhub-firstuseauthenticator 1.0
+                    self.log.warning(
+                        f"{len(usernames)} forms of {normalized_username} present in password db: {usernames}. Only {normalized_username} will be used."
+                    )
+                    if normalized_username not in passwords:
+                        username = usernames[0]
+                        self.log.warning(
+                            f"Normalizing username in password db {username}->{normalized_username}"
+                        )
+                        db[normalized_username.encode("utf8")] = passwords[username]
+
     def _user_exists(self, username):
         """
         Return true if given user already exists.
@@ -149,11 +226,11 @@ class FirstUseAuthenticator(Authenticator):
                 return None
 
         with dbm.open(self.dbm_path, 'c', 0o600) as db:
-            stored_pw = db.get(username.encode(), None)
+            stored_pw = db.get(username.encode("utf8"), None)
 
             if stored_pw is not None:
                 # for existing passwords: ensure password hash match
-                if bcrypt.hashpw(password.encode(), stored_pw) != stored_pw:
+                if bcrypt.hashpw(password.encode("utf8"), stored_pw) != stored_pw:
                     return None
             else:
                 # for new users: ensure password validity and store password hash
@@ -164,7 +241,7 @@ class FirstUseAuthenticator(Authenticator):
                     )
                     self.log.error(handler.custom_login_error)
                     return None
-                db[username] = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
+                db[username] = bcrypt.hashpw(password.encode("utf8"), bcrypt.gensalt())
 
         return username
 
@@ -194,8 +271,8 @@ class FirstUseAuthenticator(Authenticator):
             self.log.error(login_err)
             # Resetting the password will fail if the new password is too short.
             return login_err
-        with dbm.open(self.dbm_path, 'c', 0o600) as db:
-            db[username] = bcrypt.hashpw(new_password.encode(), bcrypt.gensalt())
+        with dbm.open(self.dbm_path, "c", 0o600) as db:
+            db[username] = bcrypt.hashpw(new_password.encode("utf8"), bcrypt.gensalt())
         login_msg = "Your password has been changed successfully!"
         self.log.info(login_msg)
         return login_msg

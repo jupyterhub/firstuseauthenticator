@@ -1,8 +1,9 @@
 """tests for first-use authenticator"""
 
-import pytest
-import logging
 from unittest import mock
+
+import dbm
+import pytest
 
 from firstuseauthenticator import FirstUseAuthenticator
 
@@ -74,3 +75,108 @@ async def test_min_pass_length(caplog, tmpcwd):
                     'Password too short! Please choose a password at least %d characters long.'
                     % auth.min_password_length
                 )
+
+
+async def test_normalized_check(caplog, tmpcwd):
+    # cases:
+    # 1.a - normalized
+    # 1.b not normalized, no collision
+    # 2.a normalized present, collision
+    # 2.b normalized not present, collision
+    # disable normalization, populate db with duplicates
+    to_load = [
+        "onlynormalized",
+        "onlyNotNormalized",
+        "collisionnormalized",
+        "collisionNormalized",
+        "collisionNotNormalized",
+        "collisionNotnormalized",
+    ]
+
+    # load passwords
+    auth1 = FirstUseAuthenticator()
+    with mock.patch.object(auth1, "normalize_username", lambda x: x):
+        for username in to_load:
+            assert await auth1.authenticate(
+                mock.Mock(),
+                {
+                    "username": username,
+                    "password": username,
+                },
+            )
+
+    # first make sure normalization was skipped
+    with dbm.open(auth1.dbm_path) as db:
+        for username in to_load:
+            assert db.get(username.encode("utf8"))
+    # at startup, normalization is checked
+    auth2 = FirstUseAuthenticator()
+    with dbm.open(auth1.dbm_path) as db:
+        passwords = {key.decode("utf8"): db[key].decode("utf8") for key in db.keys()}
+    in_db = set(passwords)
+    # 1.a no-op
+    assert "onlynormalized" in in_db
+    # 1.b renamed
+    assert "onlynotnormalized" in in_db
+    assert "onlyNotNormalized" not in in_db
+    # 2.a collision, preserve normalized
+    assert "collisionnormalized" in in_db
+    assert "collisionNormalized" in in_db
+    # 2.b collision, preserve and add normalized
+    assert "collisionnotnormalized" in in_db
+    assert "collisionNotNormalized" in in_db
+    assert "collisionNotnormalized" in in_db
+
+    # now verify logins
+    m = mock.Mock()
+    for username, password in (
+        ("onlynormalized", "onlynormalized"),
+        ("onlyNormalized", "onlynormalized"),
+        ("onlynotnormalized", "onlyNotNormalized"),
+        ("onlyNotNormalized", "onlyNotNormalized"),
+        ("collisionnormalized", "collisionnormalized"),
+        ("collisionNormalized", "collisionnormalized"),
+        ("collisionnotnormalized", "collisionNotNormalized"),
+        ("collisionNotNormalized", "collisionNotNormalized"),
+    ):
+        # normalized form, doesn't reset password
+        authenticated = await auth2.authenticate(
+            m,
+            {
+                "username": username,
+                "password": "firstuse",
+            },
+        )
+        assert authenticated is None
+
+        # non-normalized form, doesn't reset password
+        authenticated = await auth2.authenticate(
+            m,
+            {
+                "username": username.upper(),
+                "password": "firstuse",
+            },
+        )
+        assert authenticated is None
+
+        # normalized form, accepts correct password
+        authenticated = await auth2.authenticate(
+            m,
+            {
+                "username": username,
+                "password": password,
+            },
+        )
+        assert authenticated
+        assert authenticated == auth2.normalize_username(username)
+
+        # non-normalized form, accepts correct password
+        authenticated = await auth2.authenticate(
+            m,
+            {
+                "username": username.upper(),
+                "password": password,
+            },
+        )
+        assert authenticated
+        assert authenticated == auth2.normalize_username(username)

@@ -5,8 +5,11 @@ When users first log in, the password they use becomes their
 password for that account. It is hashed with bcrypt & stored
 locally in a dbm file, and checked next time they log in.
 """
-import dbm
 import os
+import shutil
+
+import bcrypt
+import dbm
 from jinja2 import ChoiceLoader, FileSystemLoader
 from jupyterhub.auth import Authenticator
 from jupyterhub.handlers import BaseHandler
@@ -15,8 +18,6 @@ from jupyterhub.orm import User
 
 from tornado import web
 from traitlets.traitlets import Unicode, Bool, Integer
-
-import bcrypt
 
 
 TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), 'templates')
@@ -45,7 +46,6 @@ class ResetPasswordHandler(BaseHandler):
         self._loaded = False
         super().__init__(*args, **kwargs)
 
-
     def _register_template_path(self):
         if self._loaded:
             return
@@ -59,13 +59,11 @@ class ResetPasswordHandler(BaseHandler):
 
         self._loaded = True
 
-
     @web.authenticated
     async def get(self):
         self._register_template_path()
         html = await self.render_template('reset.html')
         self.finish(html)
-
 
     @web.authenticated
     async def post(self):
@@ -125,6 +123,17 @@ class FirstUseAuthenticator(Authenticator):
         config=True,
         help="""
         Check for non-normalized-username passwords on startup.
+
+        Prior to 1.0, multiple passwords could be set for the same username,
+        without normalization.
+
+        When True, duplicate usernames will be detected and removed,
+        and ensure all usernames are normalized.
+
+        If any duplicates are found, a backup of the original is created,
+        which can be inspected manually.
+
+        Typically, this will only need to run once.
         """,
     )
 
@@ -147,7 +156,56 @@ class FirstUseAuthenticator(Authenticator):
 
         Non-normalized entries will never be used during login.
         """
-        with dbm.open(self.dbm_path, "c", 0o600) as db:
+
+        # it's nontrival to check for db existence, because there are so many extensions
+        # and you don't give dbm a path, you give it a *base* name,
+        # which may point to one or more paths.
+        # There's no way to retrieve the actual path(s) for a db
+        dbm_extensions = ("", ".db", ".pag", ".dir", ".dat", ".bak")
+        dbm_files = list(
+            filter(os.path.isfile, (self.dbm_path + ext for ext in dbm_extensions))
+        )
+        if not dbm_files:
+            # no database, nothing to do
+            return
+
+        backup_path = self.dbm_path + "-backup"
+        backup_files = list(
+            filter(os.path.isfile, (backup_path + ext for ext in dbm_extensions))
+        )
+
+        collision_warning = (
+            f"Duplicate password entries have been found, and stored in {backup_path!r}."
+            f" Duplicate entries have been removed from {self.dbm_path!r}."
+            f" If you are happy with the solution, you can delete the backup file(s): {' '.join(backup_files)}."
+            " Or you can inspect the backup database with:\n"
+            "    import dbm\n"
+            f"    with dbm.open({backup_path!r}, 'r') as db:\n"
+            "        for username in db.keys():\n"
+            "            print(username, db[username])\n"
+        )
+
+        if backup_files:
+            self.log.warning(collision_warning)
+            return
+
+        # create a temporary backup of the passwords db
+        # to be retained only if collisions are detected
+        # or deleted if no collisions are detected
+        backup_files = []
+        for path in dbm_files:
+            base, ext = os.path.splitext(path)
+            if ext not in dbm_extensions:
+                # catch weird names with '.' and no .db extension
+                base = path
+                ext = ""
+            backup = f"{base}-backup{ext}"
+            shutil.copyfile(path, backup)
+            backup_files.append(backup)
+
+        collision_found = False
+
+        with dbm.open(self.dbm_path, "w") as db:
             # load the username:hashed_password dict
             passwords = {}
             for key in db.keys():
@@ -188,14 +246,35 @@ class FirstUseAuthenticator(Authenticator):
                     # the non-normalized username passwords will never be used
                     # after jupyterhub-firstuseauthenticator 1.0
                     self.log.warning(
-                        f"{len(usernames)} forms of {normalized_username} present in password db: {usernames}. Only {normalized_username} will be used."
+                        f"{len(usernames)} variations of the username {normalized_username} present in password database: {usernames}."
+                        f" Only the password stored for the normalized {normalized_username} will be used."
                     )
+                    collision_found = True
                     if normalized_username not in passwords:
+                        # we choose usernames[0] as most likely to be the first entry
+                        # this isn't guaranteed, but it's the best information we have
                         username = usernames[0]
                         self.log.warning(
                             f"Normalizing username in password db {username}->{normalized_username}"
                         )
                         db[normalized_username.encode("utf8")] = passwords[username]
+                    for username in usernames:
+                        if username != normalized_username:
+                            self.log.warning(
+                                f"Removing un-normalized username from password db {username}"
+                            )
+                            del db[username]
+
+        if collision_found:
+            self.log.warning(collision_warning)
+        else:
+            # remove backup files, if we didn't find anything to backup
+            self.log.debug(f"No collisions found, removing backup files {backup_files}")
+            for path in backup_files:
+                try:
+                    os.remove(path)
+                except FileNotFoundError:
+                    pass
 
     def _user_exists(self, username):
         """
@@ -218,8 +297,8 @@ class FirstUseAuthenticator(Authenticator):
         return super().validate_username(name)
 
     async def authenticate(self, handler, data):
-        username = self.normalize_username(data['username'])
-        password = data['password']
+        username = self.normalize_username(data["username"])
+        password = data["password"]
 
         if not self.create_users:
             if not self._user_exists(username):
@@ -258,7 +337,6 @@ class FirstUseAuthenticator(Authenticator):
         except KeyError:
             pass
 
-
     def reset_password(self, username, new_password):
         """
         This allows changing the password of a logged user.
@@ -277,6 +355,8 @@ class FirstUseAuthenticator(Authenticator):
         self.log.info(login_msg)
         return login_msg
 
-
     def get_handlers(self, app):
-        return [(r'/login', CustomLoginHandler), (r'/auth/change-password', ResetPasswordHandler)]
+        return [
+            (r"/login", CustomLoginHandler),
+            (r"/auth/change-password", ResetPasswordHandler),
+        ]

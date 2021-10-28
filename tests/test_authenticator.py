@@ -121,11 +121,20 @@ async def test_normalized_check(caplog, tmpcwd):
     assert "onlyNotNormalized" not in in_db
     # 2.a collision, preserve normalized
     assert "collisionnormalized" in in_db
-    assert "collisionNormalized" in in_db
+    assert "collisionNormalized" not in in_db
     # 2.b collision, preserve and add normalized
     assert "collisionnotnormalized" in in_db
-    assert "collisionNotNormalized" in in_db
-    assert "collisionNotnormalized" in in_db
+    assert "collisionNotNormalized" not in in_db
+    assert "collisionNotnormalized" not in in_db
+
+    # check the backup
+    with dbm.open(auth1.dbm_path + "-backup") as db:
+        backup_passwords = {
+            key.decode("utf8"): db[key].decode("utf8") for key in db.keys()
+        }
+
+    for name in to_load:
+        assert name in backup_passwords
 
     # now verify logins
     m = mock.Mock()
@@ -180,3 +189,6 @@ async def test_normalized_check(caplog, tmpcwd):
         )
         assert authenticated
         assert authenticated == auth2.normalize_username(username)
+
+    # load again, should skip the
+    auth3 = FirstUseAuthenticator()

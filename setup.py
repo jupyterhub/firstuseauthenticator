@@ -20,6 +20,12 @@ setup(
     license="BSD-3-Clause",
     python_requires=">=3.6",
     packages=find_packages(),
+    entry_points={
+        "jupyterhub.authenticators": [
+            "firstuse = firstuseauthenticator:FirstUseAuthenticator",
+            "firstuseauthenticator = firstuseauthenticator:FirstUseAuthenticator",
+        ],
+    },
     install_requires=['bcrypt', 'jupyterhub>=1.3'],
     package_data={
         '': ['*.html'],

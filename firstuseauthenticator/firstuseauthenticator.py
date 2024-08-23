@@ -17,7 +17,7 @@ from jupyterhub.handlers import LoginHandler
 from jupyterhub.orm import User
 
 from tornado import web
-from traitlets.traitlets import Unicode, Bool, Integer
+from traitlets import default, Unicode, Bool, Integer
 
 
 TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), 'templates')
@@ -295,6 +295,13 @@ class FirstUseAuthenticator(Authenticator):
         if any((char in name) for char in invalid_chars):
             return False
         return super().validate_username(name)
+
+    @default("allow_all")
+    def _allow_all_default(self):
+        # the default behavior: allow all users
+        # if allowed_users is unspecified
+        # only affects JupyterHub >=5
+        return (not self.allowed_users)
 
     async def authenticate(self, handler, data):
         username = self.normalize_username(data["username"])

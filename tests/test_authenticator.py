@@ -8,14 +8,9 @@ import pytest
 from firstuseauthenticator import FirstUseAuthenticator
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def tmpcwd(tmpdir):
     tmpdir.chdir()
-
-# use pytest-asyncio
-pytestmark = pytest.mark.asyncio
-# run each test in a temporary working directory
-pytestmark = pytestmark(pytest.mark.usefixtures("tmpcwd"))
 
 
 async def test_basic(tmpcwd):

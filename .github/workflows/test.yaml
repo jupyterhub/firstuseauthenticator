@@ -53,6 +53,5 @@ jobs:
         run: |
           pytest -v --cov=firstuseauthenticator
 
-      - name: Submit codecov report
-        run: |
-          codecov
+      # GitHub action reference: https://github.com/codecov/codecov-action
+      - uses: codecov/codecov-action@v4

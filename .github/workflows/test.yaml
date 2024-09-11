@@ -1,41 +1,60 @@
+# This is a GitHub workflow defining a set of jobs with a set of steps.
+# ref: https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions
+#
 name: Tests
 
 on:
   pull_request:
+    paths-ignore:
+      - "**.md"
+      - ".github/workflows/*.yaml"
+      - "!.github/workflows/test.yaml"
   push:
+    paths-ignore:
+      - "**.md"
+      - ".github/workflows/*.yaml"
+      - "!.github/workflows/test.yaml"
+    branches-ignore:
+      - "dependabot/**"
+      - "pre-commit-ci-update-config"
+    tags: ["**"]
   workflow_dispatch:
-
-env:
-  # pytest colors: https://github.com/pytest-dev/pytest/issues/7443
-  FORCE_COLOR: "1"
 
 jobs:
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 10
 
     strategy:
       # Keep running even if one variation of the job fail
       fail-fast: false
       matrix:
-        python:
-          - "3.6"
-          - "3.7"
-          - "3.8"
-          - "3.9"
-          - "3.10"
+        include:
+          - python-version: "3.6"
+            runs-on: ubuntu-20.04
+          - python-version: "3.7"
+            runs-on: ubuntu-22.04
+          - python-version: "3.8"
+            runs-on: ubuntu-22.04
+          - python-version: "3.9"
+            runs-on: ubuntu-latest
+          - python-version: "3.10"
+            runs-on: ubuntu-latest
+          - python-version: "3.11"
+            runs-on: ubuntu-latest
+          - python-version: "3.12"
+            runs-on: ubuntu-latest
+          - python-version: "3.x"
+            runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Install Python ${{ matrix.python }}
-        uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python }}
+          python-version: ${{ matrix.python-version }}
 
       # preserve pip cache to speed up installation
-      - name: Cache pip
-        uses: actions/cache@v2
+      - uses: actions/cache@v4
         with:
           path: ~/.cache/pip
           # Look to see if there is a cache hit for the corresponding requirements file
@@ -51,8 +70,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest -v --cov=firstuseauthenticator
+          pytest -v --color=yes --cov=firstuseauthenticator
 
-      - name: Submit codecov report
-        run: |
-          codecov
+      # GitHub action reference: https://github.com/codecov/codecov-action
+      - uses: codecov/codecov-action@v4

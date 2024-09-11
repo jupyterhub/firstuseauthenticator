@@ -1,20 +1,30 @@
 # Build releases and (on tags) publish to PyPI
 name: Release
 
-# always build releases (to make sure wheel-building works)
-# but only publish to PyPI on tags
+# Always tests wheel building, but only publish to PyPI on pushed tags.
 on:
-  push:
   pull_request:
+    paths-ignore:
+      - ".github/workflows/*.yaml"
+      - "!.github/workflows/release.yaml"
+  push:
+    paths-ignore:
+      - ".github/workflows/*.yaml"
+      - "!.github/workflows/release.yaml"
+    branches-ignore:
+      - "dependabot/**"
+      - "pre-commit-ci-update-config"
+    tags: ["**"]
+  workflow_dispatch:
 
 jobs:
   release:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: 3.9
+          python-version: "3.12"
 
       - name: install build package
         run: |
@@ -28,7 +38,7 @@ jobs:
           ls -l dist
 
       - name: publish to pypi
-        uses: pypa/gh-action-pypi-publish@v1.4.1
+        uses: pypa/gh-action-pypi-publish@release/v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
           user: __token__

@@ -4,6 +4,28 @@ For detailed changes from the prior release, click on the version number, and
 its link will bring up a GitHub listing of changes. Use `git log` on the
 command line for details.
 
+## 1.1
+
+### [1.1.0] - 2024-09-17
+
+#### Enhancements made
+
+- default: allow all users if allowed_users is unspecified [#56](https://github.com/jupyterhub/firstuseauthenticator/pull/56) ([@minrk](https://github.com/minrk), [@consideRatio](https://github.com/consideRatio))
+- Register authentication class with jupyterhub [#53](https://github.com/jupyterhub/firstuseauthenticator/pull/53) ([@consideRatio](https://github.com/consideRatio), [@minrk](https://github.com/minrk))
+
+#### Continuous integration improvements
+
+- ci: refresh github workflows [#57](https://github.com/jupyterhub/firstuseauthenticator/pull/57) ([@consideRatio](https://github.com/consideRatio))
+
+#### Contributors to this release
+
+The following people contributed discussions, new ideas, code and documentation contributions, and review.
+See [our definition of contributors](https://github-activity.readthedocs.io/en/latest/#how-does-this-tool-define-contributions-in-the-reports).
+
+([GitHub contributors page for this release](https://github.com/jupyterhub/firstuseauthenticator/graphs/contributors?from=2021-10-28&to=2024-09-17&type=c))
+
+@consideRatio ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Ffirstuseauthenticator+involves%3AconsideRatio+updated%3A2021-10-28..2024-09-17&type=Issues)) | @minrk ([activity](https://github.com/search?q=repo%3Ajupyterhub%2Ffirstuseauthenticator+involves%3Aminrk+updated%3A2021-10-28..2024-09-17&type=Issues))
+
 ## 1.0
 
 ### [1.0.0] - 2021-10-27
@@ -80,6 +102,7 @@ Disabling the creation of new users with `c.FirstUseAuthenticator.create_users =
 
 * First release
 
+[1.1.0]: https://github.com/jupyterhub/firstuseauthenticator/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/jupyterhub/firstuseauthenticator/compare/v0.14.1...v1.0.0
 [0.14.1]: https://github.com/jupyterhub/firstuseauthenticator/compare/v0.14.0...v0.14.1
 [0.14.0]: https://github.com/jupyterhub/firstuseauthenticator/compare/0.13.0...v0.14.0

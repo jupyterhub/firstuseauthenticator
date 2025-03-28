@@ -6,6 +6,21 @@ command line for details.
 
 ## 1.1
 
+### [1.1.1] - 2025-03-28 
+
+([full changelog](https://github.com/jupyterhub/firstuseauthenticator/compare/1.1.0...e1ada8b587cd1d9095c3a230663d3bfafb8d6546))
+
+#### Merged PRs
+
+- Resolve xsrf issue in reset password page [#59](https://github.com/jupyterhub/firstuseauthenticator/pull/59) ([@jiravatt](https://github.com/jiravatt))
+
+#### Contributors to this release
+
+([GitHub contributors page for this release](https://github.com/jupyterhub/firstuseauthenticator/graphs/contributors?from=2024-09-17&to=2025-03-28&type=c))
+
+[@jiravatt](https://github.com/search?q=repo%3Ajupyterhub%2Ffirstuseauthenticator+involves%3Ajiravatt+updated%3A2024-09-17..2025-03-28&type=Issues)
+
+
 ### [1.1.0] - 2024-09-17
 
 #### Enhancements made

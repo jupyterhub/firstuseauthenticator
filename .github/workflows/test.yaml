@@ -54,7 +54,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       # preserve pip cache to speed up installation
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: ~/.cache/pip
           # Look to see if there is a cache hit for the corresponding requirements file

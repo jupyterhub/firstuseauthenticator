@@ -30,14 +30,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - python-version: "3.6"
-            runs-on: ubuntu-20.04
-          - python-version: "3.7"
-            runs-on: ubuntu-22.04
-          - python-version: "3.8"
-            runs-on: ubuntu-22.04
-          - python-version: "3.9"
-            runs-on: ubuntu-latest
           - python-version: "3.10"
             runs-on: ubuntu-latest
           - python-version: "3.11"
@@ -65,7 +57,7 @@ jobs:
       - name: Install Python dependencies
         run: |
           pip install --upgrade pip
-          pip install --upgrade . -r dev-requirements.txt
+          pip install --upgrade . ".[test]"
           pip freeze
 
       - name: Run tests

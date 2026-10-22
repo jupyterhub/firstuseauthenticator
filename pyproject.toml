@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jupyterhub-firstuseauthenticator"
+dynamic = ["version", "readme"]
+description = "JupyterHub Authenticator that lets users set passwords on first use"
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+keywords = ["jupyterhub", "authenticator"]
+classifiers = [
+    "Framework :: Jupyter",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+authors = [
+    { name = "Yuvi Panda", email = "yuvipanda@gmail.com" },
+    { name = "Project Jupyter Contributors", email = "jupyter@googlegroups.com" },
+]
+requires-python = ">=3.10"
+dependencies = [
+    "bcrypt",
+    "jupyterhub>=3",
+]
+
+[project.urls]
+Source = "https://github.com/jupyterhub/firstuseauthenticator"
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+]
+
+[project.entry-points."jupyterhub.authenticators"]
+firstuse = "firstuseauthenticator:FirstUseAuthenticator"
+firstuseauthenticator = "firstuseauthenticator:FirstUseAuthenticator"
+
+[tool.setuptools.dynamic]
+version = { attr = "firstuseauthenticator._version.__version__" }
+readme = { file = "README.md", content-type = "text/markdown" }
+
+[tool.setuptools.packages.find]
+include = ["firstuseauthenticator*"]
+
+[tool.setuptools.package-data]
+"firstuseauthenticator.templates" = ["*.html"]
+
+# pytest is used for running Python based tests
+#
+# ref: https://docs.pytest.org/en/stable/
+#
+[tool.pytest.ini_options]
+# automatically run coroutine tests with asyncio
+asyncio_mode = "auto"
+testpaths = ["tests"]

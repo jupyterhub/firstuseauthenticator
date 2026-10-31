@@ -311,6 +311,14 @@ class FirstUseAuthenticator(Authenticator):
             if not self._user_exists(username):
                 return None
 
+        # Validate before touching the password database: JupyterHub only
+        # rejects an invalid username after authenticate() returns, so
+        # without this check a failed login still stored the username and
+        # its password hash (see #54).
+        if not self.validate_username(username):
+            self.log.error(f"Invalid username {username!r}")
+            return None
+
         with dbm.open(self.dbm_path, 'c', 0o600) as db:
             stored_pw = db.get(username.encode("utf8"), None)
 
